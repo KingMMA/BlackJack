@@ -55,43 +55,9 @@ class BJ_Hand(cards.Hand):
 
 class BJ_Player(BJ_Hand):
     
-    def __init__(self, name: str, all_money: int, money_for_rate: int ) -> None:
+    def __init__(self, name) -> None:
         super().__init__(name)
-        if all_money > 0 and 10000 > money_for_rate > 0:
-            if all_money >= money_for_rate:
-                self.all_money = all_money
-                self.money_for_rate = money_for_rate
-            else:
-                print("Ставка не може бути більше загальної кількості грошей")
-                raise Exception()
-        else:
-            print("Недопустима кількість грошей")
-            raise Exception
-        
-    
-    """
-    @property
-    def all_money_pr(self):
-        return self.all_money
-    
-    @all_money_pr.setter
-    def all_money_pr(self, money):
-        if money > 0:
-            self.all_money = money
-        else:
-            raise Exception("Не допустима кількість грошей")
-        
-    @property
-    def money_for_rate_pr(self):
-        return self.money_for_rate
-    
-    @money_for_rate_pr.setter
-    def money_for_rate_pr(self, money):
-        if money > 0:
-            self.money_for_rate = money
-        else:
-            raise Exception("Не допустима кількість ставки")
-    """
+        self.all_money = 0
     
     def is_lose_all_money(self):
         if abs(self.all_money) != self.all_money or not bool(self.all_money):
@@ -118,6 +84,33 @@ class BJ_Player(BJ_Hand):
             return True
         else:
             print(f"Баланс гравця '{self.name}': {self.all_money}")
+      
+    @property
+    def set_money(self):
+        return self.all_money
+    
+    @set_money.setter
+    def set_money(self, money):
+        if self.all_money != 0:
+            pass
+        if money > 0:
+            self.all_money = money
+        else:
+            print("Не допустима кількість грошей")
+            self.set_money = int(input(f"Скільки грошей у вас, {self.name}?: "))
+                    
+    @property
+    def set_bet(self):
+        return self.money_for_rate
+    
+    @set_bet.setter
+    def set_bet(self, bet):
+        if bet > 0 and bet <= self.all_money:
+            self.money_for_rate = bet
+        else:
+            print("Не допустима ставка")
+            self.set_bet = int(input(f"Ваша ставка, {self.name}?: "))
+            
            
     def win(self):
         print(f"Гравець '{self.name}' виграв {self.money_for_rate} гривень")
@@ -158,8 +151,7 @@ class BJ_Game:
         self.players: list[BJ_Player] = []
         self.del_players = []
         for name in names:
-            while bool(self.check(name)) != True:
-                pass   
+            self.players.append(BJ_Player(name))  
         self.dealer = BJ_Dealer("Дилер")
         self.deck = BJ_Deck()
         self.deck.populate()
@@ -177,40 +169,33 @@ class BJ_Game:
         while not player.is_busted() and player.is_hitting():
             self.deck.deal([player])
             print(player)
+            print(self.dealer)
             if player.is_busted():
                 player.bust(self.players)
-                
-    def check(self, name: str):
-        try:
-            player = BJ_Player(
-                name, all_money=int(input(f"Скільки грошей у вас, {name}?: ")),
-                money_for_rate=int(input(f"Ваша ставка, {name}?: "))
-            )
-            self.players.append(player)
-            return True
-        except Exception:
-            return False
         
                 
     def play(self):
         if not bool(self.players):
             raise Exception
+        for player in self.players:
+            player.set_money = int(input(f"Скільки грошей у вас, {player.name}?: "))
+            player.set_bet = int(input(f"Ваша ставка, {player.name}?: "))
         if len(self.deck.cards) < ((len(self.players) + 1) * 2) :
             self.add_new_deck()
         self.deck.deal(self.players + [self.dealer], per_hand=2)
         self.dealer.flip_first_card()
         for player in self.players:
             print(player)
-        print(self.dealer)
-        for player in self.players:
             if player.want_continue():
-                self.__additional_cards(player)
+                print(player)
+                print(self.dealer)
             else:
                 self.players.remove(player)
+        for player in self.players:
+            self.__additional_cards(player)
         self.dealer.flip_first_card()
         if not self.still_playing:
             print(self.dealer)
-        
         else:
             print(self.dealer)
             self.__additional_cards(self.dealer)
